@@ -1,6 +1,6 @@
 # \<login-gestion\>
 
-elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a través de Firebase
+elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a través de Firebase con Polymer
 
 ## Install the Polymer-CLI
 
