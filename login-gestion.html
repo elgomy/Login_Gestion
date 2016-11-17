@@ -1,0 +1,132 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../polymerfire/polymerfire.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../paper-toast/paper-toast.html">
+<link rel="import" href="login-signin.html">
+<link rel="import" href="login-register.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+
+
+<!--
+`login-gestion`
+elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a través de Firebase
+
+@demo demo/index.html 
+-->
+
+<dom-module id="login-gestion">
+  <template>
+    <style>
+      :host {
+         @apply(--layout-vertical);
+
+       
+         width: 400px;
+
+      }
+    </style>
+
+    <firebase-app name="loginGestion"
+                  auth-domain="logingestion.firebaseapp.com"
+                  database-url="https://logingestion.firebaseio.com"
+                  api-key="AIzaSyA9XQwWZbXlrOr8LntPQpfWfX6tGUNn5Xk">
+    </firebase-app>
+
+    <firebase-auth app-name="loginGestion"
+                   id="auth" 
+                   user="{{user}}" 
+                   provider="google"
+                   signed-in="{{signedIn}}">
+    </firebase-auth>
+    <p>Usuario: {{user.displayName}}</p>
+    <p>Email: {{user.email}}</p>
+
+    
+
+    <login-signin 
+            on-sign-google="sign" 
+            on-sign-email="email"
+            signed-in="{{signedIn}}">
+    </login-signin>
+
+    <login-register 
+            on-register="signUp" 
+            signed-in="{{signedIn}}">
+    </login-register>
+
+    <paper-button on-tap="logout" raised>logout</paper-button>
+    
+    <paper-toast id="toast1" text="Ops!! hay un error"></paper-toast>
+  
+    
+      
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'login-gestion',
+
+      // como hemos colocado el componente <firebase-auth> que el provider es 'google', nos loguearemos con Google
+      sign:function(){
+        this.$.auth.signInWithPopup().catch(function(error){
+          console.log(error.code, error.message)
+        }).then(function(result){
+          console.log('usuario ' + result.user.displayName +' logueado')
+        });
+      },
+      
+      // 
+      logout:function(){
+        this.$.auth.signOut().catch(function(error){
+          console.log(error.code, error.message)
+        }).then(function(){
+          console.log('usuario deslogado')
+        })
+      },
+
+      //método para crear un usuario con email y password. Estos dos datos serán propiedades del objeto 'data'
+
+      signUp:function(e,data){
+        this.$.auth.createUserWithEmailAndPassword(data.email, data.password).catch(function(error){
+          console.log(error);
+          switch (error.code){
+            case 'auth/invalid-email':
+            alert('email invalido')
+            break
+            case 'auth/weak-password':
+            alert('el password debe tener mínimo 6 caracteres')
+            break
+          }
+        //  if(error.code === 'auth/invalid-email'){
+        //    alert('email invalido')
+        //  }
+          
+        }).then(function(user){
+          console.log(user.email)
+        });
+      },
+      
+      //login con email y password; 'dato' es el objeto pasado por el componente <login-signin>, que incluye las propiedades 'dato.email' y 'dato.password'
+      email:function(e,dato){
+       
+        this.$.auth.signInWithEmailAndPassword(dato.email, dato.password).catch(function(error){
+          console.log(error.code, error.message);
+          
+            // no incluimos el selector $ para toast, desconozco por que
+              this.toast1.open()
+            
+          
+        })
+      }
+
+
+      
+      
+
+      
+
+
+    });
+  </script>
+</dom-module>

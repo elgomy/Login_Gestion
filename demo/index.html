@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <head>
+    <title>login-gestion demo</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, minimum-scale=1.0, initial-scale=1, user-scalable=yes">
+    <script src="../../webcomponentsjs/webcomponents-lite.js"></script>
+
+    <link rel="import" href="../../iron-demo-helpers/demo-pages-shared-styles.html">
+    <link rel="import" href="../../iron-demo-helpers/demo-snippet.html">
+
+    <link rel="import" href="../login-gestion.html">
+
+    <style is="custom-style" include="demo-pages-shared-styles">
+    demo-snippet {
+      --demo-snippet-demo: {
+        background: var(--paper-grey-200);
+        padding: 8px;
+        height: 600px;
+        width: 900px;
+      };
+      --demo-snippet-code: {
+        max-height: 300px;
+      };
+    }
+    </style>
+
+    
+  </head>
+  <body>
+
+    <div class="vertical-section-container"> 
+      <h3>Basic login-gestion Demo</h3>
+     <demo-snippet> 
+        <template>
+          <login-gestion></login-gestion>
+        </template>
+      </demo-snippet> 
+    </div>
+
+  </body>
+</html>

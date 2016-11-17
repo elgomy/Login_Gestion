@@ -1,0 +1,62 @@
+<link rel="import" href="../polymer/polymer.html">
+<link rel="import" href="../paper-input/paper-input.html">
+<link rel="import" href="../paper-button/paper-button.html">
+<link rel="import" href="../iron-flex-layout/iron-flex-layout.html">
+
+<!--
+`login-registro`
+elemento para hacer el registro en firebase a travès de email y password
+
+@demo demo/index.html 
+-->
+
+<dom-module id="login-register">
+  <template>
+    <style>
+      :host {
+      @apply(--layout-flex);
+      
+      }
+
+      :host([signed-in]) { /*condicional de estilo que nos permite que cuando el usuario se loguee el componente se haga invisible*/
+        opacity: 0;
+        pointer-events: none; 
+      } 
+    </style>
+    <h2>Register</h2>
+    <paper-input label="Email" value="{{data.email}}" auto-validate error-message="email invalido"></paper-input>
+    <paper-input label="Password" type="password" value="{{data.password}}"></paper-input>
+    <paper-button raised on-tap="signUp">Sign Up</paper-button>
+      
+  </template>
+
+  <script>
+    Polymer({
+
+      is: 'login-register',
+
+      properties: {
+        data:{
+          type:Object,
+          value: function(){
+            return{
+              email:'', 
+              password:''
+            }
+          }
+        },
+
+        signedIn: {
+          type: Boolean,
+          reflectToAttribute: true,
+          value: false
+        }
+      },
+
+      signUp:function(){
+        this.fire('register',this.data)
+      }
+
+    });
+  </script>
+</dom-module>
