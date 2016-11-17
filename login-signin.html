@@ -47,7 +47,7 @@ componente login de la Progressive App de codelabs
     
     <div>
   <!--sign in con email y password -->
-    <paper-input label="email" value="{{dato.email}}"></paper-input>
+    <paper-input label="Email" value="{{dato.email}}"></paper-input>
     <paper-input label="Password" type="password" value="{{dato.password}}"></paper-input>
     <paper-button raised on-tap="signEmail">SIGN IN</paper-button>
     </div>
@@ -100,7 +100,15 @@ componente login de la Progressive App de codelabs
       },
 
       signGoogle: function() {
-        this.fire('sign-google', null, { bubbles: false });
+        this.fire('sign-google', 'google', { bubbles: false });
+      },
+
+      signFacebook: function() {
+        this.fire('sign-facebook', 'facebook', { bubbles: false });
+      },
+
+      signTwitter: function() {
+        this.fire('sign-twitter', 'twitter', { bubbles: false });
       },
 
       signEmail:function(){

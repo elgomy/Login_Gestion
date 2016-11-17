@@ -35,7 +35,7 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
     <firebase-auth app-name="loginGestion"
                    id="auth" 
                    user="{{user}}" 
-                   provider="google"
+                   provider="{{provider}}"
                    signed-in="{{signedIn}}">
     </firebase-auth>
     <p>Usuario: {{user.displayName}}</p>
@@ -67,8 +67,14 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
 
       is: 'login-gestion',
 
-      // como hemos colocado el componente <firebase-auth> que el provider es 'google', nos loguearemos con Google
-      sign:function(){
+      properties:{
+          //propiedad bindeada al componente <firebase-auth> y que recibe seteada desde el componente <login-signin> los valores 'google', 'facebook' o twitter para loguearnos con una de estas redes
+          provider:String,
+      },
+
+      // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' y este valor se seteará a la propiedad 'provider' bindeada al componente 'firebase-auth'
+      sign:function(e,social){
+        this.set('provider',social);
         this.$.auth.signInWithPopup().catch(function(error){
           console.log(error.code, error.message)
         }).then(function(result){
