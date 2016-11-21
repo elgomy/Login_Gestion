@@ -63,16 +63,18 @@ Custom property | Description | Default
         @apply(--demo-snippet);
       }
 
+      /* clase aplicada a la demo */
       .demo {
         border-bottom: 1px solid var(--google-grey-300);
         background-color: white;
-        margin: 0;
-        margin-bottom: 100px;
+        margin: auto;
         padding: 20px;
         @apply(--demo-snippet-demo);
+        width:400px;
       }
 
-      .code {
+ /* clase aplicada al código de la demo donde se encuentra el componente <login-gestion> mark-down*/
+      .code { 
         padding: 20px;
         margin: 0;
         background-color: var(--google-grey-100);
@@ -84,9 +86,11 @@ Custom property | Description | Default
       .code > pre {
         margin: 0;
         padding: 0 0 10px 0;
-      }
 
+      }
+    /* donde se encuentra el mark-down */
       .code-container {
+        margin-top:50px;
         position: relative;
       }
 

@@ -20,7 +20,7 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
       :host {
          @apply(--layout-vertical);
 
-       
+        margin:auto;
          width: 400px;
 
       }
@@ -70,13 +70,33 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
       properties:{
           //propiedad bindeada al componente <firebase-auth> y que recibe seteada desde el componente <login-signin> los valores 'google', 'facebook' o twitter para loguearnos con una de estas redes
           provider:String,
+
+          //objeto del usuario
+          user:Object
       },
 
       // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' y este valor se seteará a la propiedad 'provider' bindeada al componente 'firebase-auth'
       sign:function(e,social){
         this.set('provider',social);
         this.$.auth.signInWithPopup().catch(function(error){
-          console.log(error.code, error.message)
+          console.log(error.code, error.message);
+            switch (error.code){
+            case 'auth/network-request-failed':
+            alert('error de conexión. Por favor, intentar de nuevo')
+            break
+            case 'auth/too-many-requests':
+            alert('demasiadas solicitaciones. Por favor, intentar más tarde')
+            break
+            case 'auth/user-disabled':
+            alert('usuario no autorizado. Por favor, entrar en contacto via email')
+            break
+            case 'auth/user-token-expired':
+            alert('Error. Por favor, intentar de nuevo')
+            break
+            case 'auth/user-token-expired':
+            alert('Error. Por favor, intentar de nuevo')
+            break
+          }
         }).then(function(result){
           console.log('usuario ' + result.user.displayName +' logueado')
         });
@@ -98,16 +118,15 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           console.log(error);
           switch (error.code){
             case 'auth/invalid-email':
-            alert('email invalido')
+            alert('email inválido')
             break
             case 'auth/weak-password':
             alert('el password debe tener mínimo 6 caracteres')
             break
-          }
-        //  if(error.code === 'auth/invalid-email'){
-        //    alert('email invalido')
-        //  }
-          
+            case 'auth/email-already-in-use':
+            alert('ya existe ese email asociado a una cuenta')
+            break
+          }   
         }).then(function(user){
           console.log(user.email)
         });
@@ -118,6 +137,20 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
        
         this.$.auth.signInWithEmailAndPassword(dato.email, dato.password).catch(function(error){
           console.log(error.code, error.message);
+             switch (error.code){
+                case 'auth/invalid-email':
+                alert('el email o el password son inválidos')
+                break
+                case 'auth/user-disabled':
+                alert('usuario no autorizado. Por favor, entrar en contacto')
+                break
+                case 'auth/user-not-found':
+                alert('no existe un usuario asociado a ese email')
+                break
+                case 'auth/wrong-password':
+                alert('el email o el password son inválidos')
+                break
+          } 
           
             // no incluimos el selector $ para toast, desconozco por que
               this.toast1.open()
