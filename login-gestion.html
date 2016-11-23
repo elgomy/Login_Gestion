@@ -24,6 +24,12 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
          width: 400px;
 
       }
+      #toastNegativo{
+         --paper-toast-color:white;
+         --paper-toast-background-color:#F50057;
+         font-weight: bold
+      }
+    
     </style>
 
     <firebase-app name="loginGestion"
@@ -54,9 +60,10 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
             signed-in="{{signedIn}}">
     </login-register>
 
-    <paper-button on-tap="logout" raised>logout</paper-button>
+    <paper-button on-tap="logout" raised hidden$="{{!signedIn}}">logout</paper-button>
     
-    <paper-toast id="toast1" text="Ops!! hay un error"></paper-toast>
+    <paper-toast id="toastPositivo"></paper-toast>
+    <paper-toast id="toastNegativo"></paper-toast>
   
     
       
@@ -75,30 +82,41 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           user:Object
       },
 
+      listeners:{
+            'feedback-positivo': 'feedbackPositivo',
+            'feedback-negativo': 'feedbackNegativo'
+      },
+
       // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' y este valor se seteará a la propiedad 'provider' bindeada al componente 'firebase-auth'
       sign:function(e,social){
         this.set('provider',social);
         this.$.auth.signInWithPopup().catch(function(error){
-          console.log(error.code, error.message);
+        //  console.log(error.code, error.message);
             switch (error.code){
             case 'auth/network-request-failed':
-            alert('error de conexión. Por favor, intentar de nuevo')
+            this.fire('feedback-negativo','Error de conexión. Por favor, intentar de nuevo')
+         //   alert('error de conexión. Por favor, intentar de nuevo')
             break
             case 'auth/too-many-requests':
-            alert('demasiadas solicitaciones. Por favor, intentar más tarde')
+             this.fire('feedback-negativo','Demasiadas solicitaciones. Por favor, intentar más tarde')
+         //   alert('demasiadas solicitaciones. Por favor, intentar más tarde')
             break
             case 'auth/user-disabled':
-            alert('usuario no autorizado. Por favor, entrar en contacto via email')
+            this.fire('feedback-negativo','usuario no autorizado. Por favor, entrar en contacto via email')
+          //  alert('usuario no autorizado. Por favor, entrar en contacto via email')
             break
             case 'auth/user-token-expired':
-            alert('Error. Por favor, intentar de nuevo')
+            this.fire('feedback-negativo','Error. Por favor, intentar de nuevo')
+          //  alert('Error. Por favor, intentar de nuevo')
             break
             case 'auth/user-token-expired':
-            alert('Error. Por favor, intentar de nuevo')
+            this.fire('feedback-negativo','Error. Por favor, intentar de nuevo')
+          //  alert('Error. Por favor, intentar de nuevo')
             break
           }
-        }).then(function(result){
-          console.log('usuario ' + result.user.displayName +' logueado')
+        }.bind(this)).then(function(result){
+          console.log('usuario ' + result.user.displayName +' logueado');
+          console.log(result);
         });
       },
       
@@ -107,64 +125,77 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
         this.$.auth.signOut().catch(function(error){
           console.log(error.code, error.message)
         }).then(function(){
-          console.log('usuario deslogado')
-        })
+          this.fire('feedback-positivo','has cerrado la sesión')
+        }.bind(this))
       },
+    
 
       //método para crear un usuario con email y password. Estos dos datos serán propiedades del objeto 'data'
 
       signUp:function(e,data){
         this.$.auth.createUserWithEmailAndPassword(data.email, data.password).catch(function(error){
-          console.log(error);
+        //  console.log(error);
+
           switch (error.code){
             case 'auth/invalid-email':
-            alert('email inválido')
+            this.fire('feedback-negativo','Email invalido')
+          // alert('email inválido')
             break
             case 'auth/weak-password':
-            alert('el password debe tener mínimo 6 caracteres')
+            this.fire('feedback-negativo','El password debe tener mínimo 6 caracteres')
+           // alert('el password debe tener mínimo 6 caracteres')
             break
             case 'auth/email-already-in-use':
-            alert('ya existe ese email asociado a una cuenta')
+            this.fire('feedback-negativo','Ya existe ese email asociado a una cuenta')
+           // alert('ya existe ese email asociado a una cuenta')
             break
           }   
-        }).then(function(user){
-          console.log(user.email)
+        }.bind(this)).then(function(user){
+          console.log(user.email);
+          console.log(user);
         });
+      },
+
+         // método que lanza un toast con mensaje positivo. El mensaje de texto se pasa como parámetro a travès de la variable 'message'
+      feedbackPositivo:function(e,message){
+        this.$.toastPositivo.open();
+        this.$.toastPositivo.text = message;
+      },
+
+
+        feedbackNegativo:function(e,message){
+        this.$.toastNegativo.open();
+        this.$.toastNegativo.text = message;
       },
       
       //login con email y password; 'dato' es el objeto pasado por el componente <login-signin>, que incluye las propiedades 'dato.email' y 'dato.password'
       email:function(e,dato){
        
         this.$.auth.signInWithEmailAndPassword(dato.email, dato.password).catch(function(error){
-          console.log(error.code, error.message);
+         // console.log(error.code, error.message);
              switch (error.code){
                 case 'auth/invalid-email':
-                alert('el email o el password son inválidos')
+                this.fire('feedback-negativo','El email o el password son inválidos')
+              //  alert('el email o el password son inválidos')
                 break
                 case 'auth/user-disabled':
-                alert('usuario no autorizado. Por favor, entrar en contacto')
+                this.fire('feedback-negativo','Usuario no autorizado. Por favor, entrar en contacto')
+              //  alert('usuario no autorizado. Por favor, entrar en contacto')
                 break
                 case 'auth/user-not-found':
-                alert('no existe un usuario asociado a ese email')
+                this.fire('feedback-negativo','No existe un usuario asociado a ese email')
+              //  alert('no existe un usuario asociado a ese email')
                 break
                 case 'auth/wrong-password':
-                alert('el email o el password son inválidos')
+                this.fire('feedback-negativo','El email o el password son inválidos')
+               // alert('el email o el password son inválidos')
                 break
-          } 
-          
-            // no incluimos el selector $ para toast, desconozco por que
-              this.toast1.open()
-            
-          
-        })
+            }  
+        }.bind(this)).then(function(user){
+          console.log(user.email);
+          console.log(user);
+        });
       }
-
-
-      
-      
-
-      
-
 
     });
   </script>
