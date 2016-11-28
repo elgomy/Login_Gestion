@@ -35,32 +35,37 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
     <firebase-app name="loginGestion"
                   auth-domain="logingestion.firebaseapp.com"
                   database-url="https://logingestion.firebaseio.com"
-                  api-key="AIzaSyA9XQwWZbXlrOr8LntPQpfWfX6tGUNn5Xk">
+                  api-key="AIzaSyA9XQwWZbXlrOr8LntPQpfWfX6tGUNn5Xk"
+                  app="{{fbapp}}">
     </firebase-app>
 
     <firebase-auth app-name="loginGestion"
                    id="auth" 
                    user="{{user}}" 
                    provider="{{provider}}"
-                   signed-in="{{signedIn}}">
+                   signed-in="{{signed}}">
     </firebase-auth>
-    <p>Usuario: {{user.displayName}}</p>
-    <p>Email: {{user.email}}</p>
 
+    <template is="dom-if" if="[[user]]">
+        <p>Usuario: {{user.displayName}}</p>
+        <p>Email: {{user.email}}</p>
+    </template>
     
 
     <login-signin 
-            on-sign-google="sign" 
+            on-sign-google="sign"
+            on-sign-facebook="sign" 
+            on-sign-twitter="sign"
             on-sign-email="email"
-            signed-in="{{signedIn}}">
+            signed-in="[[signed]]">
     </login-signin>
 
     <login-register 
             on-register="signUp" 
-            signed-in="{{signedIn}}">
+            signed-in="[[signed]]">
     </login-register>
 
-    <paper-button on-tap="logout" raised hidden$="{{!signedIn}}">logout</paper-button>
+    <paper-button on-tap="logout" raised hidden$="[[!signed]]">logout</paper-button>
     
     <paper-toast id="toastPositivo"></paper-toast>
     <paper-toast id="toastNegativo"></paper-toast>
@@ -79,7 +84,16 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           provider:String,
 
           //objeto del usuario
-          user:Object
+          user:Object,
+
+          // propiedad bindeada que hace el enlace con la propiedad SignedIn de <firebase-auth> que nos devuelve 'true' cuando el usuario esté autenticado.
+          signed: {
+          type: Boolean,
+          reflectToAttribute: true,
+          value: false
+        },
+
+          fbapp:Object,
       },
 
       listeners:{
@@ -115,9 +129,17 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
             break
           }
         }.bind(this)).then(function(result){
-          console.log('usuario ' + result.user.displayName +' logueado');
-          console.log(result);
-        });
+            this.saveProfile(result.user);
+        }.bind(this));
+      },
+
+      // método para guardar los datos del usuario en Firebase. Le pasamos como parámetro a través de 'user' 
+      saveProfile: function (user){
+        this.fbapp.database().ref('/users/' + user.uid).set({
+          nombre: user.displayName,
+          email: user.email,
+          photoURL: user.photoURL
+        })
       },
       
       // 
@@ -150,9 +172,9 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
            // alert('ya existe ese email asociado a una cuenta')
             break
           }   
-        }.bind(this)).then(function(user){
-          console.log(user.email);
-          console.log(user);
+        }.bind(this)).then(function(result){
+          console.log(result.email);
+        
         });
       },
 
