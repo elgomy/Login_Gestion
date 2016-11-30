@@ -27,10 +27,10 @@ componente login de la Progressive App de codelabs
        @apply(--layout-flex);
       }
 
-      :host([signed-in]) { /*condicional de estilo que nos permite que cuando el usuario se loguee el componente se haga invisible*/
+    /*  :host([signed-in]) { /*condicional de estilo que nos permite que cuando el usuario se loguee el componente se haga invisible
         opacity: 0;
         pointer-events: none; 
-      } 
+      } */
 
       paper-button > * {
         vertical-align: middle;
@@ -100,15 +100,18 @@ componente login de la Progressive App de codelabs
       },
 
       signGoogle: function() {
-        this.fire('sign-google', 'google', { bubbles: false });
+        let google = new firebase.auth.GoogleAuthProvider();
+        this.fire('sign-google', google, { bubbles: false });
       },
 
       signFacebook: function() {
-        this.fire('sign-facebook', 'facebook', { bubbles: false });
+        let facebook = new firebase.auth.FacebookAuthProvider();
+        this.fire('sign-facebook', facebook, { bubbles: false });
       },
 
       signTwitter: function() {
-        this.fire('sign-twitter', 'twitter', { bubbles: false });
+        let twitter = new firebase.auth.TwitterAuthProvider(); 
+        this.fire('sign-twitter', twitter, { bubbles: false });            
       },
 
       signEmail:function(){

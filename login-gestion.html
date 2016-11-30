@@ -42,8 +42,8 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
     <firebase-auth app-name="loginGestion"
                    id="auth" 
                    user="{{user}}" 
-                   provider="{{provider}}"
-                   signed-in="{{signed}}">
+                   signed-in="{{signed}}"
+                   status-known="{{statusKnown}}">
     </firebase-auth>
 
     <template is="dom-if" if="[[user]]">
@@ -53,9 +53,9 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
     
 
     <login-signin 
-            on-sign-google="sign"
-            on-sign-facebook="sign" 
-            on-sign-twitter="sign"
+            on-sign-google="link"
+            on-sign-facebook="link" 
+            on-sign-twitter="link"
             on-sign-email="email"
             signed-in="[[signed]]">
     </login-signin>
@@ -64,6 +64,8 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
             on-register="signUp" 
             signed-in="[[signed]]">
     </login-register>
+
+   
 
     <paper-button on-tap="logout" raised hidden$="[[!signed]]">logout</paper-button>
     
@@ -92,46 +94,70 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           reflectToAttribute: true,
           value: false
         },
-
+          // objeto que nos da acceso a la base de datos de Firebase
           fbapp:Object,
+        
+          statusKnown: Boolean
       },
+
+      observers:['autoAuth(user, statusKnown)'],
+
+      // Observer que autentica al usuario de manera anónima si éste aún no existe y si podemos determinar si está logueado (statusKnown)
+      autoAuth: function(user, statusKnown){
+        if(statusKnown && !user){
+         this.$.auth.signInAnonymously().then(function(result){
+          console.log(result)
+         });
+         
+       }
+      },
+
+      // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' 
+
+      link: function(e,social){
+     //   let google = new firebase.auth.GoogleAuthProvider();
+        this.user.linkWithPopup(social).then(function(result){
+            console.log('usuario linkado', result);
+            this.saveProfile(result.user);
+        }.bind(this),
+
+        function(error){
+            //  console.log(error.code, error.message);
+            switch (error.code){
+            case 'auth/provider-already-linked':
+            this.fire('feedback-negativo','Red Social ya asociada a un usuario')
+            break
+            case 'auth/invalid-credential':
+             this.fire('feedback-negativo','Credencial de autenticación expirada. Por favor, intentar de nuevo')
+            break
+            case 'auth/credential-already-in-use':
+            this.fire('feedback-negativo','Red Social ya asociada a un usuario')
+            break
+            case 'auth/email-already-in-use':
+            this.fire('feedback-negativo','Email ya asociado a un usuario')
+            break
+            case 'auth/invalid-email':
+            this.fire('feedback-negativo','Email o Password inválidos')
+            break
+            case 'auth/wrong-password':
+            this.fire('feedback-negativo','Email o Password inválidos')
+            break
+          }
+
+        }.bind(this));
+       
+      },
+
+       
+
 
       listeners:{
             'feedback-positivo': 'feedbackPositivo',
-            'feedback-negativo': 'feedbackNegativo'
+            'feedback-negativo': 'feedbackNegativo',
+
       },
 
-      // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' y este valor se seteará a la propiedad 'provider' bindeada al componente 'firebase-auth'
-      sign:function(e,social){
-        this.set('provider',social);
-        this.$.auth.signInWithPopup().catch(function(error){
-        //  console.log(error.code, error.message);
-            switch (error.code){
-            case 'auth/network-request-failed':
-            this.fire('feedback-negativo','Error de conexión. Por favor, intentar de nuevo')
-         //   alert('error de conexión. Por favor, intentar de nuevo')
-            break
-            case 'auth/too-many-requests':
-             this.fire('feedback-negativo','Demasiadas solicitaciones. Por favor, intentar más tarde')
-         //   alert('demasiadas solicitaciones. Por favor, intentar más tarde')
-            break
-            case 'auth/user-disabled':
-            this.fire('feedback-negativo','usuario no autorizado. Por favor, entrar en contacto via email')
-          //  alert('usuario no autorizado. Por favor, entrar en contacto via email')
-            break
-            case 'auth/user-token-expired':
-            this.fire('feedback-negativo','Error. Por favor, intentar de nuevo')
-          //  alert('Error. Por favor, intentar de nuevo')
-            break
-            case 'auth/user-token-expired':
-            this.fire('feedback-negativo','Error. Por favor, intentar de nuevo')
-          //  alert('Error. Por favor, intentar de nuevo')
-            break
-          }
-        }.bind(this)).then(function(result){
-            this.saveProfile(result.user);
-        }.bind(this));
-      },
+   
 
       // método para guardar los datos del usuario en Firebase. Le pasamos como parámetro a través de 'user' 
       saveProfile: function (user){
@@ -142,7 +168,7 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
         })
       },
       
-      // 
+      // cerrar sesión de usuario
       logout:function(){
         this.$.auth.signOut().catch(function(error){
           console.log(error.code, error.message)
