@@ -1,4 +1,4 @@
-<link rel="import" href="../polymer/polymer.html">
+s<link rel="import" href="../polymer/polymer.html">
 <link rel="import" href="../polymerfire/polymerfire.html">
 <link rel="import" href="../paper-button/paper-button.html">
 <link rel="import" href="../paper-toast/paper-toast.html">
@@ -47,10 +47,20 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
     </firebase-auth>
 
     <template is="dom-if" if="[[user]]">
-        <p>Usuario: {{user.displayName}}</p>
-        <p>Email: {{user.email}}</p>
+
+        <firebase-document
+                
+                app-name="loginGestion"
+                path="/users/{{user.uid}}" 
+                data="{{perfilUsuario}}">
+       </firebase-document>
+              <p>Id: {{user.uid}}</p>
+              <p>Email: {{perfilUsuario.email}}</p>
+              <p>Usuario: {{perfilUsuario.nombre}}</p>
+     
     </template>
-    
+
+ 
 
     <login-signin 
             on-sign-google="link"
@@ -68,6 +78,10 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
    
 
     <paper-button on-tap="logout" raised hidden$="[[!signed]]">logout</paper-button>
+    <paper-button raised on-tap="linkEmail">linkEmail</paper-button>
+     <paper-button raised on-tap="sendEmailPass">Nueva seña</paper-button>
+
+   
     
     <paper-toast id="toastPositivo"></paper-toast>
     <paper-toast id="toastNegativo"></paper-toast>
@@ -87,6 +101,7 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
 
           //objeto del usuario
           user:Object,
+        
 
           // propiedad bindeada que hace el enlace con la propiedad SignedIn de <firebase-auth> que nos devuelve 'true' cuando el usuario esté autenticado.
           signed: {
@@ -94,10 +109,14 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           reflectToAttribute: true,
           value: false
         },
-          // objeto que nos da acceso a la base de datos de Firebase
+          // objeto que nos da acceso a la base de datos de Firebase, y a travès de este objeto, tendremos acceso a los servicios de Firebase: -firebase.auth(); -firebase.database(); -firebase.storage(). IMPORTANTE: quando tengamos problemas de acceso a estos servicios de Firebase a través de Polymerfire podremos acceder a través de este objeto
           fbapp:Object,
         
-          statusKnown: Boolean
+          statusKnown: Boolean,
+
+          //objeto que nos devuelve <firebase-document> con los datos del usuario
+
+          perfilUsuario: Object
       },
 
       observers:['autoAuth(user, statusKnown)'],
@@ -117,10 +136,11 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
       link: function(e,social){
      //   let google = new firebase.auth.GoogleAuthProvider();
         this.user.linkWithPopup(social).then(function(result){
-            console.log('usuario linkado', result);
+            console.log('usuario linkado', result.user.providerData[0]);
+            console.log(result.user);
             this.saveProfile(result.user);
-        }.bind(this),
 
+        }.bind(this),
         function(error){
             //  console.log(error.code, error.message);
             switch (error.code){
@@ -143,12 +163,13 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
             this.fire('feedback-negativo','Email o Password inválidos')
             break
           }
-
-        }.bind(this));
-       
+        }.bind(this));  
       },
 
-       
+      linkEmail:function(e,user){
+         this.user.link(firebase.auth.EmailAuthProvider.credential(this.user.email, 'password'));
+         console.log(user)
+      },
 
 
       listeners:{
@@ -162,9 +183,9 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
       // método para guardar los datos del usuario en Firebase. Le pasamos como parámetro a través de 'user' 
       saveProfile: function (user){
         this.fbapp.database().ref('/users/' + user.uid).set({
-          nombre: user.displayName,
+          nombre: user.providerData[0].displayName,
           email: user.email,
-          photoURL: user.photoURL
+          photoURL: user.providerData[0].photoURL
         })
       },
       
@@ -199,9 +220,9 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
             break
           }   
         }.bind(this)).then(function(result){
-          console.log(result.email);
-        
-        });
+          this.saveProfile(result);
+          console.log('usuario registrado')
+        }.bind(this));
       },
 
          // método que lanza un toast con mensaje positivo. El mensaje de texto se pasa como parámetro a travès de la variable 'message'
@@ -215,6 +236,18 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
         this.$.toastNegativo.open();
         this.$.toastNegativo.text = message;
       },
+
+        // método que envía un email al usuario para resetear el password
+        sendEmailPass:function(user){
+          this.fbapp.auth().sendPasswordResetEmail(this.user.email).then(function() {
+            console.log('email enviado')
+        }, function(error) {
+            console.log(error)
+          });
+
+      },
+        
+
       
       //login con email y password; 'dato' es el objeto pasado por el componente <login-signin>, que incluye las propiedades 'dato.email' y 'dato.password'
       email:function(e,dato){
@@ -239,10 +272,9 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
                // alert('el email o el password son inválidos')
                 break
             }  
-        }.bind(this)).then(function(user){
-          console.log(user.email);
-          console.log(user);
-        });
+        }.bind(this)).then(function(result){
+          this.saveProfile(result.user);
+        }.bind(this));
       }
 
     });
