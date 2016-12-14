@@ -79,7 +79,8 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
 
     <paper-button on-tap="logout" raised hidden$="[[!signed]]">logout</paper-button>
     <paper-button raised on-tap="linkEmail">linkEmail</paper-button>
-     <paper-button raised on-tap="sendEmailPass">Nueva seña</paper-button>
+     
+     <a href="#" on-click="sendEmailPass">Has olvidado tu constraseña?</a>
 
    
     
@@ -100,46 +101,59 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           provider:String,
 
           //objeto del usuario
-          user:Object,
-        
+          user:Object,        
 
           // propiedad bindeada que hace el enlace con la propiedad SignedIn de <firebase-auth> que nos devuelve 'true' cuando el usuario esté autenticado.
           signed: {
-          type: Boolean,
-          reflectToAttribute: true,
-          value: false
-        },
+              type: Boolean,
+              reflectToAttribute: true,
+              value: false
+            },
           // objeto que nos da acceso a la base de datos de Firebase, y a travès de este objeto, tendremos acceso a los servicios de Firebase: -firebase.auth(); -firebase.database(); -firebase.storage(). IMPORTANTE: quando tengamos problemas de acceso a estos servicios de Firebase a través de Polymerfire podremos acceder a través de este objeto
           fbapp:Object,
         
           statusKnown: Boolean,
 
           //objeto que nos devuelve <firebase-document> con los datos del usuario
-
           perfilUsuario: Object
-      },
+         },
 
-      observers:['autoAuth(user, statusKnown)'],
+          observers:['autoAuth(user, statusKnown)'],
+
+          listeners:{
+            'feedback-positivo': 'feedbackPositivo',
+            'feedback-negativo': 'feedbackNegativo',
+
+         },
 
       // Observer que autentica al usuario de manera anónima si éste aún no existe y si podemos determinar si está logueado (statusKnown)
       autoAuth: function(user, statusKnown){
         if(statusKnown && !user){
          this.$.auth.signInAnonymously().then(function(result){
           console.log(result)
-         });
-         
+         });        
        }
       },
 
-      // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' 
+      // método que lanza un toast con mensaje positivo. El mensaje de texto se pasa como parámetro a travès de la variable 'message'
+      feedbackPositivo:function(e,message){
+        this.$.toastPositivo.open();
+        this.$.toastPositivo.text = message;
+      },
 
+
+      feedbackNegativo:function(e,message){
+        this.$.toastNegativo.open();
+        this.$.toastNegativo.text = message;
+      },
+
+      // recibe como parámetro 'social' el dato recibido desde el componente <login-signin> al lanzar el evento. 'social' puede tener el valor 'google', 'facebook' o 'twitter' 
       link: function(e,social){
      //   let google = new firebase.auth.GoogleAuthProvider();
         this.user.linkWithPopup(social).then(function(result){
             console.log('usuario linkado', result.user.providerData[0]);
             console.log(result.user);
             this.saveProfile(result.user);
-
         }.bind(this),
         function(error){
             //  console.log(error.code, error.message);
@@ -169,42 +183,12 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
       linkEmail:function(e,user){
          this.user.link(firebase.auth.EmailAuthProvider.credential(this.user.email, 'password'));
          console.log(user)
-      },
-
-
-      listeners:{
-            'feedback-positivo': 'feedbackPositivo',
-            'feedback-negativo': 'feedbackNegativo',
-
-      },
-
-   
-
-      // método para guardar los datos del usuario en Firebase. Le pasamos como parámetro a través de 'user' 
-      saveProfile: function (user){
-        this.fbapp.database().ref('/users/' + user.uid).set({
-          nombre: user.providerData[0].displayName,
-          email: user.email,
-          photoURL: user.providerData[0].photoURL
-        })
-      },
+      },       
       
-      // cerrar sesión de usuario
-      logout:function(){
-        this.$.auth.signOut().catch(function(error){
-          console.log(error.code, error.message)
-        }).then(function(){
-          this.fire('feedback-positivo','has cerrado la sesión')
-        }.bind(this))
-      },
-    
-
       //método para crear un usuario con email y password. Estos dos datos serán propiedades del objeto 'data'
-
       signUp:function(e,data){
         this.$.auth.createUserWithEmailAndPassword(data.email, data.password).catch(function(error){
         //  console.log(error);
-
           switch (error.code){
             case 'auth/invalid-email':
             this.fire('feedback-negativo','Email invalido')
@@ -225,18 +209,6 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
         }.bind(this));
       },
 
-         // método que lanza un toast con mensaje positivo. El mensaje de texto se pasa como parámetro a travès de la variable 'message'
-      feedbackPositivo:function(e,message){
-        this.$.toastPositivo.open();
-        this.$.toastPositivo.text = message;
-      },
-
-
-        feedbackNegativo:function(e,message){
-        this.$.toastNegativo.open();
-        this.$.toastNegativo.text = message;
-      },
-
         // método que envía un email al usuario para resetear el password
         sendEmailPass:function(user){
           this.fbapp.auth().sendPasswordResetEmail(this.user.email).then(function() {
@@ -246,12 +218,9 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
           });
 
       },
-        
-
-      
+           
       //login con email y password; 'dato' es el objeto pasado por el componente <login-signin>, que incluye las propiedades 'dato.email' y 'dato.password'
-      email:function(e,dato){
-       
+      email:function(e,dato){   
         this.$.auth.signInWithEmailAndPassword(dato.email, dato.password).catch(function(error){
          // console.log(error.code, error.message);
              switch (error.code){
@@ -275,7 +244,25 @@ elemento que nos permite hacer la gestion de los usuarios (login y cadastro) a t
         }.bind(this)).then(function(result){
           this.saveProfile(result.user);
         }.bind(this));
-      }
+      },
+
+      // método para guardar los datos del usuario en Firebase. Le pasamos como parámetro a través de 'user' 
+      saveProfile: function (user){
+        this.fbapp.database().ref('/users/' + user.uid).set({
+          nombre: user.providerData[0].displayName,
+          email: user.email,
+          photoURL: user.providerData[0].photoURL
+        })
+      },
+
+      // cerrar sesión de usuario
+      logout:function(){
+        this.$.auth.signOut().catch(function(error){
+          console.log(error.code, error.message)
+        }).then(function(){
+          this.fire('feedback-positivo','has cerrado la sesión')
+        }.bind(this))
+      },
 
     });
   </script>
